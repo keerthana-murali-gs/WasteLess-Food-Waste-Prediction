@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – WasteLess Food Waste Management</title>
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Custom Theme CSS -->
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="sidebar">
+            <a href="dashboard.html" class="sidebar-brand">
+                <img src="images/logo.svg" alt="WasteLess Logo">
+                <span>WasteLess</span>
+            </a>
+
+            <div class="sidebar-nav">
+                <div class="sidebar-heading">Core Modules</div>
+                <a href="dashboard.html" class="nav-link-custom active">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="food.html" class="nav-link-custom">
+                    <i class="bi bi-egg-fried"></i>
+                    <span>Food Management</span>
+                </a>
+                <a href="records.html" class="nav-link-custom">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Daily Records</span>
+                </a>
+
+                <div class="sidebar-heading mt-3">Machine Learning</div>
+                <a href="prediction.html" class="nav-link-custom">
+                    <i class="bi bi-cpu"></i>
+                    <span>Demand Prediction</span>
+                </a>
+                <a href="reports.html" class="nav-link-custom">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                    <span>Waste Analytics</span>
+                </a>
+
+                <div class="sidebar-heading mt-3">External Links</div>
+                <a href="index.html" class="nav-link-custom">
+                    <i class="bi bi-house"></i>
+                    <span>Project Portal</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-light text-success me-2" style="width:34px;height:34px;font-size:1rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div style="line-height: 1.2;">
+                            <span class="d-block fw-bold small" id="currentUserName">Admin</span>
+                            <small class="text-muted" style="font-size: 0.72rem;">BCA Final Year</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger border-0 p-1" id="logoutBtn" title="Sign Out">
+                        <i class="bi bi-box-arrow-right fs-5"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="main-content">
+            <!-- Top Navigation Bar -->
+            <header class="app-topbar">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" id="sidebarToggle">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <h5 class="mb-0 fw-bold d-none d-sm-block text-dark">Kitchen Operations Overview</h5>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div id="apiStatusBadge" class="api-status-badge mock" title="Click to toggle connection mode">
+                        <span class="pulse-dot mock"></span> Standalone Mock Mode
+                    </div>
+                    <a href="records.html" class="btn btn-brand btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i> Log Daily Record
+                    </a>
+                </div>
+            </header>
+
+            <!-- Dashboard Body -->
+            <main class="p-3 p-lg-4">
+                <!-- Page Title Row -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-1">Executive Food Waste Dashboard</h3>
+                        <p class="text-muted small mb-0">Real-time kitchen inventory consumption, waste metrics, and AI forecast.</p>
+                    </div>
+                    <div class="text-muted small mt-2 mt-sm-0">
+                        <i class="bi bi-calendar3 me-1"></i> <span id="currentDateStr">Today</span>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Row -->
+                <div class="row g-3 mb-4">
+                    <!-- Total Prepared -->
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-semibold">Total Prepared</span>
+                                    <h3 class="fw-bold my-1 text-dark" id="kpiPrepared">--</h3>
+                                    <span class="text-success small fw-medium"><i class="bi bi-box-seam me-1"></i>Kitchen Output</span>
+                                </div>
+                                <div class="stat-icon bg-success-subtle text-success">
+                                    <i class="bi bi-cup-hot-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Consumed -->
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card accent-blue">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-semibold">Total Consumed</span>
+                                    <h3 class="fw-bold my-1 text-dark" id="kpiConsumed">--</h3>
+                                    <span class="text-primary small fw-medium"><i class="bi bi-check2-circle me-1"></i>Customer Demand</span>
+                                </div>
+                                <div class="stat-icon bg-primary-subtle text-primary">
+                                    <i class="bi bi-person-check-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Food Waste Discarded -->
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card accent-red">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-semibold">Discarded / Waste %</span>
+                                    <h3 class="fw-bold my-1 text-danger" id="kpiWasted">--</h3>
+                                    <span class="badge bg-danger-subtle text-danger" id="kpiWastePct">0.0% Waste</span>
+                                </div>
+                                <div class="stat-icon bg-danger-subtle text-danger">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Cost Loss -->
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="stat-card accent-amber">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-semibold">Financial Loss</span>
+                                    <h3 class="fw-bold my-1 text-dark" id="kpiCost">--</h3>
+                                    <span class="text-warning-emphasis small fw-medium"><i class="bi bi-currency-rupee me-1"></i>Wasted Ingredients</span>
+                                </div>
+                                <div class="stat-icon bg-warning-subtle text-warning">
+                                    <i class="bi bi-cash-stack"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Kitchen Alerts Banner -->
+                <div class="card-custom mb-4" id="alertsCard">
+                    <div class="card-custom-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark"><i class="bi bi-bell-fill text-warning me-2"></i>Smart Kitchen Insights & Waste Alerts</span>
+                        <span class="badge bg-light text-muted fw-normal" id="alertsCount">3 Alerts</span>
+                    </div>
+                    <div class="p-3" id="alertsContainer">
+                        <div class="text-center py-2 text-muted small">Loading kitchen alerts...</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row g-3 mb-4">
+                    <!-- 14-Day Timeline Trend -->
+                    <div class="col-lg-8">
+                        <div class="card-custom h-100 p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-0">14-Day Operations Timeline</h6>
+                                    <small class="text-muted">Prepared vs Consumed vs Wasted Trends</small>
+                                </div>
+                                <span class="badge bg-light text-muted">Daily Units</span>
+                            </div>
+                            <div style="height: 300px; position: relative;">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="col-lg-4">
+                        <div class="card-custom h-100 p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-0">Waste by Category</h6>
+                                    <small class="text-muted">Discards distribution</small>
+                                </div>
+                                <span class="badge bg-light text-muted">Proportion</span>
+                            </div>
+                            <div style="height: 300px; position: relative;" class="d-flex align-items-center justify-content-center">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Top Wasted Items & Quick Action Panel -->
+                <div class="row g-3">
+                    <!-- Top Wasted Food Items Table -->
+                    <div class="col-lg-8">
+                        <div class="card-custom h-100">
+                            <div class="card-custom-header d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Top High-Waste Food Items</span>
+                                <a href="reports.html" class="small text-decoration-none text-success">Full Analysis &rarr;</a>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-custom align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Food Item</th>
+                                            <th>Prepared</th>
+                                            <th>Wasted</th>
+                                            <th>Waste %</th>
+                                            <th>Est. Loss</th>
+                                            <th>Action Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topWastedTableBody">
+                                        <tr><td colspan="6" class="text-center py-3 text-muted">Loading table...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Navigation Actions -->
+                    <div class="col-lg-4">
+                        <div class="card-custom h-100 p-3">
+                            <h6 class="fw-bold mb-3">Kitchen Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <a href="records.html" class="btn btn-outline-success text-start py-2">
+                                    <i class="bi bi-plus-square-fill me-2"></i> Log Daily Food Preparation
+                                </a>
+                                <a href="prediction.html" class="btn btn-outline-primary text-start py-2">
+                                    <i class="bi bi-cpu-fill me-2"></i> Run AI Demand Prediction
+                                </a>
+                                <a href="food.html" class="btn btn-outline-secondary text-start py-2">
+                                    <i class="bi bi-egg-fried me-2"></i> Manage Menu & Food Catalog
+                                </a>
+                                <button type="button" class="btn btn-outline-dark text-start py-2" id="quickExportBtn">
+                                    <i class="bi bi-download me-2"></i> Export Historical Records (CSV)
+                                </button>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <div class="p-3 bg-light rounded">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-robot text-success fs-5 me-2"></i>
+                                    <span class="fw-bold small">Next-Day AI Demand</span>
+                                </div>
+                                <h4 class="fw-bold text-success mb-1" id="nextDayDemandVal">--</h4>
+                                <small class="text-muted">Total servings forecast across menu items for tomorrow.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/mock_data.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('currentDateStr').textContent = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
+            });
+
+            // Quick Export
+            document.getElementById('quickExportBtn').addEventListener('click', () => {
+                api.exportCSV();
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                if (confirm('Sign out of the administrator dashboard?')) {
+                    await api.logout();
+                    window.location.href = 'login.html';
+                }
+            });
+
+            // Load Dashboard Data
+            await loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // 1. Fetch KPIs
+                const kpis = await api.getDashboardKPIs();
+                document.getElementById('kpiPrepared').textContent = formatNumber(kpis.total_prepared, 0);
+                document.getElementById('kpiConsumed').textContent = formatNumber(kpis.total_consumed, 0);
+                document.getElementById('kpiWasted').textContent = `${formatNumber(kpis.total_wasted, 1)} units`;
+                document.getElementById('kpiWastePct').textContent = `${kpis.waste_percentage}% Waste`;
+                document.getElementById('kpiCost').textContent = formatCurrency(kpis.estimated_cost);
+                document.getElementById('nextDayDemandVal').textContent = `${formatNumber(kpis.next_day_demand, 0)} Servings`;
+
+                // 2. Fetch Alerts
+                const alerts = await api.getAlerts();
+                renderAlerts(alerts);
+
+                // 3. Fetch Analytics & Render Charts
+                const analytics = await api.getAnalytics();
+                renderTimelineChart(analytics);
+                renderCategoryChart(analytics);
+                renderTopWastedTable(analytics.most_wasted);
+
+            } catch (err) {
+                console.error("Dashboard data load error:", err);
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            const countBadge = document.getElementById('alertsCount');
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = '<div class="text-muted small py-2">No active kitchen alerts at this time. Operations optimal.</div>';
+                countBadge.textContent = '0 Alerts';
+                return;
+            }
+
+            countBadge.textContent = `${alerts.length} Active`;
+            container.innerHTML = alerts.slice(0, 3).map(a => {
+                const borderClass = a.severity === 'danger' ? 'border-danger' : a.severity === 'success' ? 'border-success' : 'border-warning';
+                const bgClass = a.severity === 'danger' ? 'bg-danger-subtle' : a.severity === 'success' ? 'bg-success-subtle' : 'bg-warning-subtle';
+                const textClass = a.severity === 'danger' ? 'text-danger' : a.severity === 'success' ? 'text-success' : 'text-warning-emphasis';
+                const icon = a.severity === 'danger' ? 'bi-exclamation-triangle-fill' : a.severity === 'success' ? 'bi-trophy-fill' : 'bi-lightbulb-fill';
+
+                return `
+                    <div class="alert alert-smart ${bgClass} border-start border-4 ${borderClass} mb-2 py-2 px-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi ${icon} ${textClass} me-2 fs-5"></i>
+                            <div class="flex-grow-1">
+                                <span class="fw-bold ${textClass} small d-block">${a.title}</span>
+                                <span class="text-dark small">${a.message}</span>
+                            </div>
+                            <small class="text-muted ms-2">${a.date_generated}</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTimelineChart(analytics) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: analytics.timeline_dates,
+                    datasets: [
+                        {
+                            label: 'Prepared',
+                            data: analytics.timeline_prepared,
+                            backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                            borderColor: '#2e7d32',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Consumed',
+                            data: analytics.timeline_consumed,
+                            backgroundColor: 'rgba(25, 118, 210, 0.7)',
+                            borderColor: '#1976d2',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            type: 'line',
+                            label: 'Discarded Waste',
+                            data: analytics.timeline_waste,
+                            borderColor: '#d32f2f',
+                            backgroundColor: 'rgba(211, 47, 47, 0.15)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryChart(analytics) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: analytics.categories,
+                    datasets: [{
+                        data: analytics.cat_waste,
+                        backgroundColor: [
+                            '#4caf50', // Breakfast (Green)
+                            '#2196f3', // Lunch (Blue)
+                            '#9c27b0', // Dinner (Purple)
+                            '#ff9800'  // Snacks (Orange)
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function renderTopWastedTable(items) {
+            const tbody = document.getElementById('topWastedTableBody');
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No waste data recorded yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => {
+                const badgeColor = item.waste_pct > 5 ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning-emphasis';
+                const statusBadge = item.waste_pct > 5 
+                    ? '<span class="badge bg-danger text-white">Reduce Batch</span>'
+                    : '<span class="badge bg-warning text-dark">Monitor Demand</span>';
+
+                return `
+                    <tr>
+                        <td class="fw-semibold text-dark">${item.name}</td>
+                        <td>${formatNumber(item.prepared, 0)} ${item.unit}</td>
+                        <td class="text-danger fw-semibold">${formatNumber(item.wasted, 1)} ${item.unit}</td>
+                        <td><span class="badge ${badgeColor}">${item.waste_pct}%</span></td>
+                        <td class="fw-medium">${formatCurrency(item.cost_loss)}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
+

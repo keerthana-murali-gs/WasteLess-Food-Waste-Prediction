@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Waste Analytics – WasteLess{% endblock %}
+{% block page_title %}<i class="bi bi-bar-chart-fill text-success"></i> Waste & Consumption Analytics{% endblock %}
+
+{% block content %}
+<!-- Analytics Summary KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card danger">
+            <div class="kpi-icon danger">
+                <i class="bi bi-trash3-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Total Food Discarded</h6>
+                <h3>{{ kpis.total_wasted }}</h3>
+                <small>Historical Units</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="kpi-card warning">
+            <div class="kpi-icon warning">
+                <i class="bi bi-pie-chart-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Overall Waste Rate</h6>
+                <h3>{{ kpis.waste_percentage }}%</h3>
+                <small>Average Loss Rate</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="kpi-card purple">
+            <div class="kpi-icon purple">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Estimated Cost Loss</h6>
+                <h3>₹ {{ kpis.estimated_cost }}</h3>
+                <small>Discarded Value</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="kpi-card emerald">
+            <div class="kpi-icon emerald">
+                <i class="bi bi-award-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Top Sustainable Item</h6>
+                <h3 class="fs-5 text-truncate" title="{{ analytics.least_wasted[0].name if analytics.least_wasted else 'N/A' }}">
+                    {{ analytics.least_wasted[0].name if analytics.least_wasted else 'N/A' }}
+                </h3>
+                <small>{{ analytics.least_wasted[0].waste_pct if analytics.least_wasted else 0 }}% Waste Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 1 Charts: Consumption Timeline & Category Breakdown -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-graph-up-arrow text-success"></i> Historical Food Demand vs Preparation Trend</h5>
+                <span class="text-muted small">Timeline (Units)</span>
+            </div>
+            <div class="card-body-clean" style="height: 330px;">
+                <canvas id="analyticsTimelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-pie-chart text-success"></i> Category Consumption Share</h5>
+                <span class="text-muted small">Meal Segments</span>
+            </div>
+            <div class="card-body-clean" style="height: 330px;">
+                <canvas id="analyticsCategoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2 Charts: Wastage Volume Bar & Day-of-Week Pattern -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-bar-chart-fill text-danger"></i> Daily Discarded Quantity (Waste Peaks)</h5>
+                <span class="text-muted small">Timeline Waste Units</span>
+            </div>
+            <div class="card-body-clean" style="height: 300px;">
+                <canvas id="analyticsWasteChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-calendar3 text-primary"></i> Day-of-Week Average Consumption Pattern</h5>
+                <span class="text-muted small">Demand Seasonality</span>
+            </div>
+            <div class="card-body-clean" style="height: 300px;">
+                <canvas id="analyticsDowChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Most Wasted & Least Wasted Food Rankings -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-exclamation-diamond-fill text-danger"></i> Most Wasted Food Items (High Priority)</h5>
+                <span class="badge bg-danger-subtle text-danger-emphasis">Action Required</span>
+            </div>
+            <div class="card-body-clean p-0">
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Discarded</th>
+                                <th>Prepared</th>
+                                <th>Waste %</th>
+                                <th>Est. Loss (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in analytics.most_wasted %}
+                            <tr>
+                                <td><strong>{{ item.name }}</strong></td>
+                                <td class="text-danger fw-bold">{{ item.wasted }} <small class="text-muted">{{ item.unit }}</small></td>
+                                <td>{{ item.prepared }} <small class="text-muted">{{ item.unit }}</small></td>
+                                <td>
+                                    <span class="badge badge-waste-high">{{ item.waste_pct }}%</span>
+                                </td>
+                                <td>₹ {{ item.cost_loss }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center py-3 text-muted">No data available.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-check-circle-fill text-success"></i> Least Wasted Food Items (Optimal Management)</h5>
+                <span class="badge bg-success-subtle text-success-emphasis">High Efficiency</span>
+            </div>
+            <div class="card-body-clean p-0">
+                <div class="table-responsive">
+                    <table class="table-custom">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Discarded</th>
+                                <th>Prepared</th>
+                                <th>Waste %</th>
+                                <th>Est. Loss (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in analytics.least_wasted %}
+                            <tr>
+                                <td><strong>{{ item.name }}</strong></td>
+                                <td class="text-success fw-bold">{{ item.wasted }} <small class="text-muted">{{ item.unit }}</small></td>
+                                <td>{{ item.prepared }} <small class="text-muted">{{ item.unit }}</small></td>
+                                <td>
+                                    <span class="badge badge-waste-low">{{ item.waste_pct }}%</span>
+                                </td>
+                                <td>₹ {{ item.cost_loss }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="5" class="text-center py-3 text-muted">No data available.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Analytics Timeline Chart
+    WasteLessCharts.renderConsumptionChart(
+        'analyticsTimelineChart',
+        {{ analytics.timeline_dates | tojson }},
+        {{ analytics.timeline_prepared | tojson }},
+        {{ analytics.timeline_consumed | tojson }}
+    );
+
+    // 2. Category Share Chart
+    WasteLessCharts.renderCategoryPieChart(
+        'analyticsCategoryChart',
+        {{ analytics.categories | tojson }},
+        {{ analytics.cat_cons | tojson }}
+    );
+
+    // 3. Waste Bar Chart
+    WasteLessCharts.renderWastageBarChart(
+        'analyticsWasteChart',
+        {{ analytics.timeline_dates | tojson }},
+        {{ analytics.timeline_waste | tojson }}
+    );
+
+    // 4. Day of Week Chart
+    WasteLessCharts.renderWeeklyDemandChart(
+        'analyticsDowChart',
+        {{ analytics.dow_labels | tojson }},
+        {{ analytics.dow_avg | tojson }}
+    );
+});
+</script>
+{% endblock %}
+

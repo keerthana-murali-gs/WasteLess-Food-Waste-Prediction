@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Demand Prediction – WasteLess{% endblock %}
+{% block page_title %}<i class="bi bi-cpu-fill text-success"></i> AI Food Demand Forecast{% endblock %}
+
+{% block content %}
+<!-- Prediction Configuration Banner -->
+<div class="modern-card mb-4">
+    <div class="card-header-clean">
+        <h5><i class="bi bi-sliders text-success"></i> Forecast Generator Controls</h5>
+        <div class="d-flex align-items-center gap-2">
+            <form action="{{ url_for('retrain') }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-outline-secondary btn-sm" title="Re-fit Random Forest on latest logged records">
+                    <i class="bi bi-arrow-repeat"></i> Retrain Model
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form method="POST" action="{{ url_for('generate_prediction_action') }}" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="prediction_date" class="form-label small fw-semibold">Forecast Target Date</label>
+                <input type="date" class="form-control" id="prediction_date" name="prediction_date" value="{{ target_date }}">
+            </div>
+
+            <div class="col-md-3">
+                <label for="safety_buffer" class="form-label small fw-semibold">Safety Buffer (Waste Prevention)</label>
+                <select class="form-select" id="safety_buffer" name="safety_buffer">
+                    <option value="0.05" {% if current_buffer == 0.05 %}selected{% endif %}>+5% (Strict Waste Minimization)</option>
+                    <option value="0.08" {% if current_buffer == 0.08 %}selected{% endif %}>+8% (Standard Recommended)</option>
+                    <option value="0.10" {% if current_buffer == 0.10 %}selected{% endif %}>+10% (Balanced Cushion)</option>
+                    <option value="0.15" {% if current_buffer == 0.15 %}selected{% endif %}>+15% (High Capacity Surge)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="food_id" class="form-label small fw-semibold">Food Item Scope</label>
+                <select class="form-select" id="food_id" name="food_id">
+                    <option value="">All Catalog Food Items</option>
+                    {% for food in foods %}
+                        <option value="{{ food.id }}" {% if selected_food_id == food.id %}selected{% endif %}>
+                            {{ food.name }} ({{ food.category }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-wasteless w-100 justify-content-center py-2">
+                    <i class="bi bi-lightning-charge-fill"></i> Generate Prediction
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Machine Learning Model Benchmark Metrics -->
+{% if model_metrics %}
+<div class="modern-card mb-4">
+    <div class="card-header-clean">
+        <h5><i class="bi bi-speedometer text-success"></i> Model Performance & Baseline Benchmark</h5>
+        <span class="badge bg-success bg-opacity-25 text-success">
+            {{ model_metrics.improvement_pct }}% Error Reduction vs Baseline
+        </span>
+    </div>
+    <div class="card-body-clean">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="p-3 border rounded-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-secondary">Baseline Model: Linear Regression</strong>
+                        <span class="badge bg-secondary">Reference</span>
+                    </div>
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <small class="text-muted d-block">MAE</small>
+                            <span class="fw-bold fs-6">{{ model_metrics.baseline.mae }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">RMSE</small>
+                            <span class="fw-bold fs-6">{{ model_metrics.baseline.rmse }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">R² Score</small>
+                            <span class="fw-bold fs-6">{{ model_metrics.baseline.r2 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="p-3 border rounded-3 bg-success-subtle border-success-subtle">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-success-emphasis">Primary Model: Random Forest Regressor</strong>
+                        <span class="badge bg-success">Selected Engine</span>
+                    </div>
+                    <div class="row text-center g-2">
+                        <div class="col-4">
+                            <small class="text-muted d-block">MAE</small>
+                            <span class="fw-bold fs-6 text-success">{{ model_metrics.random_forest.mae }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">RMSE</small>
+                            <span class="fw-bold fs-6 text-success">{{ model_metrics.random_forest.rmse }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">R² Score</small>
+                            <span class="fw-bold fs-6 text-success">{{ model_metrics.random_forest.r2 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-muted small mt-2">
+            <i class="bi bi-shield-check text-success me-1"></i>
+            Chronologically split: Lag features (1-day, 7-day, 14-day rolling averages) are derived strictly from historical past records with zero lookahead leakage.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Predictions Table -->
+<div class="modern-card">
+    <div class="card-header-clean">
+        <h5>
+            <i class="bi bi-stars text-success"></i>
+            Next-Day Food Demand & Preparation Recommendations
+        </h5>
+        <span class="text-muted small">Target Date: <strong>{{ target_date }}</strong></span>
+    </div>
+
+    <div class="card-body-clean p-0">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Food Item</th>
+                        <th>Category</th>
+                        <th>Historical Avg</th>
+                        <th>Predicted Demand</th>
+                        <th>Recommended Preparation</th>
+                        <th>Safety Buffer</th>
+                        <th>Model Used</th>
+                        <th>Demand Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in predictions_list %}
+                    <tr>
+                        <td>
+                            <strong class="text-dark">{{ p.food_name }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge-cat badge-cat-{{ p.category.lower() }}">
+                                {{ p.category }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ p.historical_avg_demand }} {{ p.unit }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary-emphasis px-2 py-1 fs-6 fw-semibold">
+                                {{ p.predicted_demand }} {{ p.unit }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success px-2 py-1 fs-6 fw-bold">
+                                {{ p.recommended_preparation }} {{ p.unit }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">+{{ p.safety_buffer_pct }}%</span>
+                        </td>
+                        <td>
+                            <small class="{% if 'Random Forest' in p.model_used %}text-success fw-semibold{% else %}text-muted{% endif %}">
+                                <i class="bi {% if 'Random Forest' in p.model_used %}bi-tree-fill{% else %}bi-calculator{% endif %} me-1"></i>
+                                {{ p.model_used }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if 'High' in p.prediction_status %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-arrow-up-right me-1"></i> {{ p.prediction_status }}</span>
+                            {% elif 'Low' in p.prediction_status %}
+                                <span class="badge bg-info text-dark"><i class="bi bi-arrow-down-right me-1"></i> {{ p.prediction_status }}</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-check-circle me-1"></i> {{ p.prediction_status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-cpu fs-2 d-block mb-2 text-secondary"></i>
+                            <h5>No Predictions Generated Yet</h5>
+                            <p class="small mb-3">Click the "Generate Prediction" button above to forecast next-day demand.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

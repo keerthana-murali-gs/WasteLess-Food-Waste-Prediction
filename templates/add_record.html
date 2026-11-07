@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{% if record %}Edit Daily Record – WasteLess{% else %}Log Daily Record – WasteLess{% endif %}{% endblock %}
+{% block page_title %}
+    <i class="bi bi-journal-plus text-success"></i> {% if record %}Edit Daily Record{% else %}Log Daily Food Record{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+        <div class="modern-card">
+            <div class="card-header-clean">
+                <h5>
+                    <i class="bi {% if record %}bi-pencil-square{% else %}bi-plus-circle-fill{% endif %} text-success"></i>
+                    {% if record %}Modify Historical Record{% else %}Daily Kitchen Log Entry{% endif %}
+                </h5>
+                <a href="{{ url_for('daily_records') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Records
+                </a>
+            </div>
+
+            <div class="card-body-clean">
+                <div class="alert alert-info py-2 px-3 small mb-4 d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill fs-5"></i>
+                    <div>
+                        <strong>Sustainability Rule:</strong> <em>Food Remaining = Prepared − Consumed</em>. 
+                        Do not assume all leftover food is discarded. Record only the portion that was actually disposed of.
+                    </div>
+                </div>
+
+                <form action="{% if record %}{{ url_for('edit_record', record_id=record.id) }}{% else %}{{ url_for('add_record') }}{% endif %}" method="POST">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="date" class="form-label small fw-semibold">Entry Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ record.date.strftime('%Y-%m-%d') if record else today_date }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="food_id" class="form-label small fw-semibold">Food Item <span class="text-danger">*</span></label>
+                            <select class="form-select" id="food_id" name="food_id" required>
+                                <option value="" disabled {% if not record %}selected{% endif %}>Select Food Catalog Item</option>
+                                {% for food in foods %}
+                                    <option value="{{ food.id }}" {% if record and record.food_id == food.id %}selected{% endif %}>
+                                        {{ food.name }} ({{ food.category }} — in {{ food.unit }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="prepared_quantity" class="form-label small fw-semibold">
+                                Quantity Prepared <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.5" min="0" class="form-control" id="prepared_quantity" name="prepared_quantity" value="{{ record.prepared_quantity if record else '' }}" placeholder="e.g. 100" required>
+                            <div class="form-text small">Total batch quantity made for the meal.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="consumed_quantity" class="form-label small fw-semibold">
+                                Quantity Consumed or Sold <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" step="0.5" min="0" class="form-control" id="consumed_quantity" name="consumed_quantity" value="{{ record.consumed_quantity if record else '' }}" placeholder="e.g. 88" required>
+                            <div class="form-text small">Actual portions consumed by customers/guests.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3 p-3 bg-light rounded-3 border">
+                        <div class="col-md-6">
+                            <label for="remaining_quantity" class="form-label small fw-semibold text-muted">
+                                Calculated Leftover (Remaining)
+                            </label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" class="form-control bg-white" id="remaining_quantity" name="remaining_quantity" value="{{ record.remaining_quantity if record else '0' }}" readonly>
+                                <span class="input-group-text bg-white"><i class="bi bi-calculator"></i></span>
+                            </div>
+                            <div class="form-text small">Auto-calculated: Prepared − Consumed</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="actual_discarded_quantity" class="form-label small fw-semibold text-danger mb-0">
+                                    Actual Discarded (Waste) <span class="text-danger">*</span>
+                                </label>
+                                <span id="waste_calc_badge" class="badge bg-secondary">0.0% Waste Rate</span>
+                            </div>
+                            <input type="number" step="0.5" min="0" class="form-control" id="actual_discarded_quantity" name="actual_discarded_quantity" value="{{ record.actual_discarded_quantity if record else '0' }}" required>
+                            <div class="form-text small">Portion not stored or repurposed that was discarded.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label small fw-semibold">Shift Notes / Observations</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="e.g. Rainy weather led to lower footfall, corporate lunch booking, etc.">{{ record.notes if record else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('daily_records') }}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-wasteless px-4">
+                            <i class="bi bi-check2"></i> {% if record %}Save Changes{% else %}Commit Daily Record{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

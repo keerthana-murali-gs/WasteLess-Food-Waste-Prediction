@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Demand Prediction – WasteLess</title>
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Custom Theme CSS -->
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="sidebar">
+            <a href="dashboard.html" class="sidebar-brand">
+                <img src="images/logo.svg" alt="WasteLess Logo">
+                <span>WasteLess</span>
+            </a>
+
+            <div class="sidebar-nav">
+                <div class="sidebar-heading">Core Modules</div>
+                <a href="dashboard.html" class="nav-link-custom">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="food.html" class="nav-link-custom">
+                    <i class="bi bi-egg-fried"></i>
+                    <span>Food Management</span>
+                </a>
+                <a href="records.html" class="nav-link-custom">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Daily Records</span>
+                </a>
+
+                <div class="sidebar-heading mt-3">Machine Learning</div>
+                <a href="prediction.html" class="nav-link-custom active">
+                    <i class="bi bi-cpu"></i>
+                    <span>Demand Prediction</span>
+                </a>
+                <a href="reports.html" class="nav-link-custom">
+                    <i class="bi bi-bar-chart-line-fill"></i>
+                    <span>Waste Analytics</span>
+                </a>
+
+                <div class="sidebar-heading mt-3">External Links</div>
+                <a href="index.html" class="nav-link-custom">
+                    <i class="bi bi-house"></i>
+                    <span>Project Portal</span>
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-light text-success me-2" style="width:34px;height:34px;font-size:1rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <div style="line-height: 1.2;">
+                            <span class="d-block fw-bold small" id="currentUserName">Admin</span>
+                            <small class="text-muted" style="font-size: 0.72rem;">BCA Final Year</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger border-0 p-1" id="logoutBtn" title="Sign Out">
+                        <i class="bi bi-box-arrow-right fs-5"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="main-content">
+            <!-- Topbar -->
+            <header class="app-topbar">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary d-lg-none me-2" id="sidebarToggle">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <h5 class="mb-0 fw-bold d-none d-sm-block text-dark">Machine Learning Demand Forecaster</h5>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div id="apiStatusBadge" class="api-status-badge mock" title="Click to toggle connection mode">
+                        <span class="pulse-dot mock"></span> Standalone Mock Mode
+                    </div>
+                    <button type="button" class="btn btn-outline-success btn-sm" id="retrainBtn">
+                        <i class="bi bi-arrow-repeat me-1"></i> Retrain Model
+                    </button>
+                </div>
+            </header>
+
+            <!-- Prediction Content -->
+            <main class="p-3 p-lg-4">
+                <!-- Page Title -->
+                <div class="mb-4">
+                    <h3 class="fw-bold mb-1">Kitchen Food Demand Forecasting</h3>
+                    <p class="text-muted small mb-0">Use time-series Machine Learning models to predict consumption and eliminate overproduction.</p>
+                </div>
+
+                <!-- Forecast Parameters & Model Comparison Row -->
+                <div class="row g-3 mb-4">
+                    <!-- Forecast Configuration Form -->
+                    <div class="col-lg-6">
+                        <div class="card-custom h-100 p-4">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-sliders text-success me-2"></i>Forecast Configuration</h5>
+
+                            <form id="predictionForm">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-sm-6">
+                                        <label for="targetDateInput" class="form-label">Forecast Target Date *</label>
+                                        <input type="date" class="form-control" id="targetDateInput" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="predictFoodSelect" class="form-label">Select Menu Items</label>
+                                        <select class="form-select" id="predictFoodSelect">
+                                            <option value="">All Menu Items (Full Kitchen)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Select Prediction Algorithm *</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="modelType" id="modelLinear" value="linear" checked>
+                                        <label class="form-check-label fw-semibold" for="modelLinear">
+                                            Linear Regression <span class="badge bg-light text-muted border">Baseline</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="modelType" id="modelRF" value="random_forest">
+                                        <label class="form-check-label fw-semibold" for="modelRF">
+                                            Random Forest Regressor <span class="badge bg-success-subtle text-success">Higher Accuracy</span>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Linear Regression provides a baseline; Random Forest models nonlinear day-of-week surges.</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="safetyBufferSlider" class="form-label mb-0">Kitchen Preparation Safety Buffer</label>
+                                        <span class="badge bg-brand fw-bold" id="bufferPctDisplay">+8% Buffer</span>
+                                    </div>
+                                    <input type="range" class="form-range" id="safetyBufferSlider" min="0" max="25" step="1" value="8">
+                                    <div class="d-flex justify-content-between text-muted" style="font-size:0.75rem;">
+                                        <span>0% (Strict Forecast)</span>
+                                        <span>8% (Recommended Optimal)</span>
+                                        <span>25% (High Safety)</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-brand w-100 py-2 fw-semibold" id="generatePredBtn">
+                                    <i class="bi bi-magic me-1"></i> Compute Demand & Recommendations
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Model Performance Metrics Card -->
+                    <div class="col-lg-6">
+                        <div class="card-custom h-100 p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Model Evaluation Metrics</h5>
+                                <span class="badge bg-success" id="trainedStatusBadge">Trained & Validated</span>
+                            </div>
+                            <p class="text-muted small mb-3">Evaluated chronologically on an 80/20 train-test split using 1,090+ historical kitchen logs with zero data leakage.</p>
+
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm align-middle text-center mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-start">Metric</th>
+                                            <th>Linear Regression</th>
+                                            <th>Random Forest</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-start fw-semibold">MAE (Servings)</td>
+                                            <td class="text-muted" id="metricLrMae">9.24</td>
+                                            <td class="fw-bold text-success" id="metricRfMae">6.91</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-start fw-semibold">RMSE</td>
+                                            <td class="text-muted" id="metricLrRmse">12.14</td>
+                                            <td class="fw-bold text-success" id="metricRfRmse">8.97</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-start fw-semibold">R² Accuracy Score</td>
+                                            <td class="text-muted" id="metricLrR2">0.866</td>
+                                            <td class="fw-bold text-success" id="metricRfR2">0.927</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="p-3 bg-light rounded border">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-award-fill text-success fs-4 me-3"></i>
+                                    <div>
+                                        <span class="fw-bold small d-block text-dark">Algorithm Comparison Insight:</span>
+                                        <small class="text-muted">
+                                            Random Forest reduces Mean Absolute Error by <strong>25.26%</strong> over the Linear Regression baseline by capturing weekend dine-in spikes and rolling 7-day momentum.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prediction Chart -->
+                <div class="card-custom p-3 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-0">Forecast Comparison Visualizer</h6>
+                            <small class="text-muted">Historical 30-Day Average vs ML Forecast vs Recommended Kitchen Batch</small>
+                        </div>
+                        <span class="badge bg-light text-muted" id="chartDateBadge">Tomorrow</span>
+                    </div>
+                    <div style="height: 320px; position: relative;">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Detailed Recommendations Table -->
+                <div class="card-custom">
+                    <div class="card-custom-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark"><i class="bi bi-clipboard2-check-fill text-success me-2"></i>Kitchen Batch Recommendations</span>
+                        <span class="badge bg-light text-muted" id="predCountBadge">0 Items</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-custom align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Food Item</th>
+                                    <th>Category</th>
+                                    <th>30-Day Hist. Avg</th>
+                                    <th>ML Predicted Demand</th>
+                                    <th>Recommended Preparation</th>
+                                    <th>Safety Buffer</th>
+                                    <th>Status Advisory</th>
+                                </tr>
+                            </thead>
+                            <tbody id="predictionTableBody">
+                                <tr><td colspan="7" class="text-center py-4 text-muted">Click "Compute Demand & Recommendations" above to generate forecast.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/mock_data.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        let predChartInstance = null;
+        let allFoods = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Default target date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('targetDateInput').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('chartDateBadge').textContent = `Target: ${tomorrow.toISOString().split('T')[0]}`;
+
+            // Safety buffer slider live badge
+            const slider = document.getElementById('safetyBufferSlider');
+            const display = document.getElementById('bufferPctDisplay');
+            slider.addEventListener('input', () => {
+                display.textContent = `+${slider.value}% Buffer`;
+            });
+
+            // Form Submit
+            document.getElementById('predictionForm').addEventListener('submit', handleGeneratePrediction);
+
+            // Retrain button
+            document.getElementById('retrainBtn').addEventListener('click', handleRetrain);
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                if (confirm('Sign out?')) {
+                    await api.logout();
+                    window.location.href = 'login.html';
+                }
+            });
+
+            // Load foods into select and run initial prediction
+            await loadInitialPredictionData();
+        });
+
+        async function loadInitialPredictionData() {
+            try {
+                allFoods = await api.getFoods();
+                const select = document.getElementById('predictFoodSelect');
+                select.innerHTML = '<option value="">All Menu Items (Full Kitchen)</option>' +
+                    allFoods.map(f => `<option value="${f.id}">${f.name} (${f.category})</option>`).join('');
+
+                // Load Model Status
+                const status = await api.getModelStatus();
+                if (status && status.metrics) {
+                    if (status.metrics.linear_regression) {
+                        document.getElementById('metricLrMae').textContent = status.metrics.linear_regression.mae;
+                        document.getElementById('metricLrRmse').textContent = status.metrics.linear_regression.rmse;
+                        document.getElementById('metricLrR2').textContent = status.metrics.linear_regression.r2;
+                    }
+                    if (status.metrics.random_forest) {
+                        document.getElementById('metricRfMae').textContent = status.metrics.random_forest.mae;
+                        document.getElementById('metricRfRmse').textContent = status.metrics.random_forest.rmse;
+                        document.getElementById('metricRfR2').textContent = status.metrics.random_forest.r2;
+                    }
+                }
+
+                // Automatically run prediction for default settings
+                await runPrediction();
+            } catch (err) {
+                console.error("Prediction initial load error:", err);
+            }
+        }
+
+        async function handleGeneratePrediction(e) {
+            e.preventDefault();
+            await runPrediction();
+        }
+
+        async function runPrediction() {
+            const target_date = document.getElementById('targetDateInput').value;
+            const food_id = document.getElementById('predictFoodSelect').value;
+            const model_type = document.querySelector('input[name="modelType"]:checked').value;
+            const safety_buffer = (parseFloat(document.getElementById('safetyBufferSlider').value) || 8) / 100.0;
+
+            document.getElementById('chartDateBadge').textContent = `Target: ${target_date}`;
+
+            try {
+                const predictions = await api.predictDemand({
+                    target_date,
+                    food_id: food_id ? parseInt(food_id) : null,
+                    model_type,
+                    safety_buffer
+                });
+
+                renderPredictionTable(predictions);
+                renderPredictionChart(predictions);
+                showToast(`Forecast generated for ${predictions.length} items using ${model_type === 'linear' ? 'Linear Regression' : 'Random Forest'}.`, 'success');
+            } catch (err) {
+                showToast('Failed to generate predictions.', 'danger');
+            }
+        }
+
+        function renderPredictionTable(items) {
+            const tbody = document.getElementById('predictionTableBody');
+            document.getElementById('predCountBadge').textContent = `${items.length} Items`;
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No predictions available.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = items.map(p => {
+                const catBadge = `badge-category-${(p.category || 'breakfast').toLowerCase()}`;
+                const statusBadge = p.prediction_status.includes('High') 
+                    ? '<span class="badge bg-warning text-dark"><i class="bi bi-arrow-up-right me-1"></i>Peak Demand</span>'
+                    : '<span class="badge bg-success-subtle text-success"><i class="bi bi-check2 me-1"></i>Optimal</span>';
+
+                return `
+                    <tr>
+                        <td class="fw-bold text-dark">${p.food_name}</td>
+                        <td><span class="badge ${catBadge}">${p.category}</span></td>
+                        <td class="text-muted">${p.historical_avg_demand} ${p.unit}</td>
+                        <td class="fw-bold text-primary">${p.predicted_demand} ${p.unit}</td>
+                        <td class="fw-bold text-success fs-6">${p.recommended_preparation} ${p.unit}</td>
+                        <td><span class="badge bg-light text-dark border">+${p.safety_buffer_pct}%</span></td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPredictionChart(items) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            const labels = items.map(i => i.food_name);
+            const histData = items.map(i => i.historical_avg_demand);
+            const predData = items.map(i => i.predicted_demand);
+            const recData = items.map(i => i.recommended_preparation);
+
+            if (predChartInstance) {
+                predChartInstance.destroy();
+            }
+
+            predChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: '30-Day Historical Average',
+                            data: histData,
+                            backgroundColor: 'rgba(100, 116, 139, 0.4)',
+                            borderColor: '#64748b',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'ML Predicted Demand',
+                            data: predData,
+                            backgroundColor: 'rgba(25, 118, 210, 0.75)',
+                            borderColor: '#1976d2',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Recommended Kitchen Batch (+Safety Buffer)',
+                            data: recData,
+                            backgroundColor: 'rgba(46, 125, 50, 0.85)',
+                            borderColor: '#2e7d32',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Quantity (Servings / Units)' } }
+                    }
+                }
+            });
+        }
+
+        async function handleRetrain() {
+            if (confirm('Retrain Machine Learning models using the latest dataset?')) {
+                const btn = document.getElementById('retrainBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Training...';
+
+                try {
+                    const res = await api.retrainModel();
+                    if (res.success) {
+                        showToast(res.message || 'Models retrained successfully!', 'success');
+                        await loadInitialPredictionData();
+                    } else {
+                        showToast(res.error || 'Retraining failed.', 'danger');
+                    }
+                } catch (e) {
+                    showToast('Retraining error occurred.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Retrain Model';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

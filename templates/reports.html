@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Report Generation – WasteLess{% endblock %}
+{% block page_title %}<i class="bi bi-file-earmark-pdf-fill text-success"></i> Sustainability & Waste Reports{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- PDF Generation Card -->
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-file-pdf text-danger"></i> Executive PDF Report Generator</h5>
+                <span class="badge bg-danger-subtle text-danger">ReportLab Engine</span>
+            </div>
+            <div class="card-body-clean">
+                <p class="text-muted small mb-4">
+                    Generate professionally styled, print-ready PDF reports including KPI summaries, food waste rate, historical logs, and AI demand predictions.
+                </p>
+
+                <form action="{{ url_for('generate_pdf') }}" method="GET" target="_blank">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Reporting Timeframe</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="period" id="periodDaily" value="daily" onchange="toggleDateSelector(true)">
+                                <label class="form-check-label small" for="periodDaily">Daily Report</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="period" id="periodWeekly" value="weekly" checked onchange="toggleDateSelector(false)">
+                                <label class="form-check-label small" for="periodWeekly">Weekly Report (Last 7 Days)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="period" id="periodMonthly" value="monthly" onchange="toggleDateSelector(false)">
+                                <label class="form-check-label small" for="periodMonthly">Monthly Report (Last 30 Days)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="dailyDatePickerDiv" style="display: none;">
+                        <label for="filter_date" class="form-label small fw-semibold">Select Specific Date</label>
+                        <input type="date" class="form-control" id="filter_date" name="filter_date" value="{{ today_date }}">
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <h6 class="small fw-bold text-dark mb-2"><i class="bi bi-card-checklist text-success me-1"></i> Report Document Structure:</h6>
+                        <ul class="text-muted small mb-0 ps-3">
+                            <li>Executive Header with WasteLess Branding</li>
+                            <li>Aggregate Portions (Prepared, Consumed, Discarded)</li>
+                            <li>Financial Cost Loss Estimation</li>
+                            <li>Detailed Food Consumption & Discard Log</li>
+                            <li>Machine Learning Demand Forecast Summary</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="btn btn-wasteless w-100 justify-content-center py-2">
+                        <i class="bi bi-file-earmark-arrow-down-fill"></i> Download PDF Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Export Card -->
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-file-earmark-spreadsheet-fill text-success"></i> Food Records CSV Export</h5>
+                <span class="badge bg-success-subtle text-success">Raw Dataset</span>
+            </div>
+            <div class="card-body-clean">
+                <p class="text-muted small mb-4">
+                    Export complete daily food records directly to comma-separated values (CSV) format for external data science modeling, Excel auditing, or academic presentation.
+                </p>
+
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <h6 class="small fw-bold text-dark mb-2"><i class="bi bi-table text-success me-1"></i> Exported Schema Attributes:</h6>
+                    <div class="row g-2 text-muted small">
+                        <div class="col-6">• Record ID & Entry Date</div>
+                        <div class="col-6">• Food ID & Item Name</div>
+                        <div class="col-6">• Category & Price/Serving</div>
+                        <div class="col-6">• Measurement Unit</div>
+                        <div class="col-6">• Quantity Prepared</div>
+                        <div class="col-6">• Quantity Consumed/Sold</div>
+                        <div class="col-6">• Leftover (Remaining)</div>
+                        <div class="col-6">• Actual Discarded Waste</div>
+                        <div class="col-6">• Calculated Waste %</div>
+                        <div class="col-6">• Estimated Loss in INR</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span>Database Records Available:</span>
+                        <strong class="text-dark">{{ total_records_count }} Records</strong>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('export_csv') }}" class="btn btn-outline-success w-100 justify-content-center py-2">
+                    <i class="bi bi-download"></i> Download Food Records CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleDateSelector(show) {
+    const div = document.getElementById('dailyDatePickerDiv');
+    if (div) {
+        div.style.display = show ? 'block' : 'none';
+    }
+}
+</script>
+{% endblock %}
+

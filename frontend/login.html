@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login – WasteLess</title>
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Custom Theme CSS -->
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Brand Header -->
+            <div class="text-center mb-4">
+                <a href="index.html" class="d-inline-flex align-items-center text-decoration-none text-success mb-2">
+                    <img src="images/logo.svg" alt="WasteLess" width="48" height="48" class="me-2">
+                    <span class="fs-3 fw-bold text-success">WasteLess</span>
+                </a>
+                <h5 class="fw-bold text-dark mt-2">Administrator Sign In</h5>
+                <p class="text-muted small">Kitchen Operations & Waste Management Console</p>
+                
+                <div class="d-inline-block mt-1">
+                    <div id="apiStatusBadge" class="api-status-badge mock" title="Click to toggle connection mode">
+                        <span class="pulse-dot mock"></span> Standalone Mock Mode
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" novalidate>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white text-muted"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" placeholder="admin" required autofocus value="admin">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="password" class="form-label">Password</label>
+                        <span class="text-muted small" style="cursor: pointer;" id="togglePassword">
+                            <i class="bi bi-eye"></i> Show
+                        </span>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white text-muted"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="••••••••" required value="admin123">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" checked>
+                        <label class="form-check-label small text-muted" for="rememberMe">Remember me</label>
+                    </div>
+                    <a href="index.html" class="small text-decoration-none text-success">Back to Home</a>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn-brand w-100 py-2 mb-3">
+                    <span id="btnText"><i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Dashboard</span>
+                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+
+                <!-- Quick Demo Fill Helper -->
+                <div class="p-2 bg-light rounded text-center border">
+                    <small class="text-muted d-block mb-1">Testing Demo Credentials:</small>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="fillDemoBtn">
+                        <i class="bi bi-magic me-1"></i> Use: admin / admin123
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/mock_data.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Password visibility toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        togglePassword.addEventListener('click', () => {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            togglePassword.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i> Hide' : '<i class="bi bi-eye"></i> Show';
+        });
+
+        // Demo fill button
+        document.getElementById('fillDemoBtn').addEventListener('click', () => {
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin123';
+        });
+
+        // Form submission handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            if (!username || !password) {
+                showToast('Please enter both username and password.', 'danger');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.classList.add('d-none');
+            btnSpinner.classList.remove('d-none');
+
+            try {
+                const res = await api.login(username, password);
+                if (res.success) {
+                    showToast(res.message || 'Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 800);
+                } else {
+                    showToast(res.error || 'Invalid credentials.', 'danger');
+                    submitBtn.disabled = false;
+                    btnText.classList.remove('d-none');
+                    btnSpinner.classList.add('d-none');
+                }
+            } catch (err) {
+                showToast('Network error during login attempt.', 'danger');
+                submitBtn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnSpinner.classList.add('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
+

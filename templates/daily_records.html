@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Food Records – WasteLess{% endblock %}
+{% block page_title %}<i class="bi bi-journal-text text-success"></i> Daily Food Records Log{% endblock %}
+
+{% block content %}
+<div class="modern-card">
+    <div class="card-header-clean flex-wrap gap-3">
+        <h5><i class="bi bi-calendar-check text-success"></i> Operational Consumption & Waste Logs</h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="{{ url_for('export_csv') }}" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+            </a>
+            <a href="{{ url_for('add_record') }}" class="btn btn-wasteless btn-sm">
+                <i class="bi bi-plus-lg"></i> Log New Record
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filtering Form -->
+    <div class="p-3 border-bottom bg-light bg-opacity-50">
+        <form method="GET" action="{{ url_for('daily_records') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Filter by Date</label>
+                <input type="date" name="date" class="form-control form-control-sm" value="{{ selected_date or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1">Filter by Food Item</label>
+                <select name="food_id" class="form-select form-select-sm">
+                    <option value="">All Food Items</option>
+                    {% for food in foods %}
+                        <option value="{{ food.id }}" {% if selected_food_id == food.id %}selected{% endif %}>
+                            {{ food.name }} ({{ food.category }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Quick Search</label>
+                <input type="text" id="tableSearchInput" class="form-control form-control-sm" placeholder="Search notes or items...">
+            </div>
+            <div class="col-md-2 d-flex gap-1 align-items-end mt-3 mt-md-0">
+                <button type="submit" class="btn btn-wasteless btn-sm w-100">
+                    <i class="bi bi-funnel"></i> Apply
+                </button>
+                {% if selected_date or selected_food_id %}
+                    <a href="{{ url_for('daily_records') }}" class="btn btn-outline-secondary btn-sm" title="Clear Filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Metrics Strip -->
+    <div class="px-3 py-2 border-bottom bg-white d-flex flex-wrap gap-4 align-items-center small text-muted">
+        <div>Total Logs: <strong class="text-dark">{{ records|length }}</strong></div>
+        <div>Total Prepared: <strong class="text-dark">{{ total_prep }}</strong> units</div>
+        <div>Total Consumed: <strong class="text-success">{{ total_cons }}</strong> units</div>
+        <div>Total Discarded: <strong class="text-danger">{{ total_disc }}</strong> units</div>
+        <div>Overall Waste Rate: <strong class="text-danger">{{ avg_waste }}%</strong></div>
+    </div>
+
+    <!-- Table -->
+    <div class="card-body-clean p-0">
+        <div class="table-responsive">
+            <table class="table-custom" id="filterableTable">
+                <thead>
+                    <tr>
+                        <th style="width: 105px;">Date</th>
+                        <th>Food Item</th>
+                        <th>Category</th>
+                        <th>Prepared</th>
+                        <th>Consumed</th>
+                        <th>Leftover</th>
+                        <th>Discarded</th>
+                        <th>Waste Rate</th>
+                        <th>Notes</th>
+                        <th class="text-end" style="width: 110px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr data-category="{{ record.food.category if record.food else '' }}">
+                        <td><strong>{{ record.date }}</strong></td>
+                        <td>
+                            <strong class="text-dark">{{ record.food.name if record.food else 'Unknown' }}</strong>
+                        </td>
+                        <td>
+                            {% if record.food %}
+                                <span class="badge-cat badge-cat-{{ record.food.category.lower() }}">
+                                    {{ record.food.category }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.prepared_quantity }} <small class="text-muted">{{ record.food.unit if record.food else '' }}</small></td>
+                        <td>{{ record.consumed_quantity }} <small class="text-muted">{{ record.food.unit if record.food else '' }}</small></td>
+                        <td>{{ record.remaining_quantity }} <small class="text-muted">{{ record.food.unit if record.food else '' }}</small></td>
+                        <td>
+                            <strong class="text-danger">{{ record.actual_discarded_quantity }}</strong>
+                        </td>
+                        <td>
+                            {% if record.waste_percentage > 12 %}
+                                <span class="badge badge-waste-high">{{ record.waste_percentage }}%</span>
+                            {% elif record.waste_percentage > 6 %}
+                                <span class="badge badge-waste-mid">{{ record.waste_percentage }}%</span>
+                            {% else %}
+                                <span class="badge badge-waste-low">{{ record.waste_percentage }}%</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted text-truncate d-inline-block" style="max-width: 180px;" title="{{ record.notes }}">
+                                {{ record.notes or '—' }}
+                            </small>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_record', record_id=record.id) }}" class="btn btn-outline-secondary" title="Edit Record">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Delete Record" data-bs-toggle="modal" data-bs-target="#deleteRecModal{{ record.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteRecModal{{ record.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content text-start">
+                                        <div class="modal-header border-0 pb-0">
+                                            <h5 class="modal-title fs-6 fw-bold text-danger">
+                                                <i class="bi bi-trash me-1"></i> Delete Record
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body py-3">
+                                            <p class="mb-1">Delete log for <strong>{{ record.food.name if record.food else 'Item' }}</strong> on <strong>{{ record.date }}</strong>?</p>
+                                            <p class="text-muted small mb-0">This operation cannot be undone.</p>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0">
+                                            <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('delete_record', record_id=record.id) }}" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-danger btn-sm">Yes, Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="bi bi-clipboard-x fs-2 d-block mb-2 text-secondary"></i>
+                            <h5>No Records Match Your Filter</h5>
+                            <p class="small mb-3">Adjust your date/food filter or add a new daily entry.</p>
+                            <a href="{{ url_for('add_record') }}" class="btn btn-wasteless btn-sm">
+                                <i class="bi bi-plus-lg"></i> Log Food Record
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

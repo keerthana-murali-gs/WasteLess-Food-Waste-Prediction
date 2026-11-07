@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – WasteLess Food Waste System{% endblock %}
+{% block page_title %}<i class="bi bi-grid-1x2-fill text-success"></i> Operational Dashboard{% endblock %}
+
+{% block content %}
+<!-- Quick KPI Cards Grid -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card green">
+            <div class="kpi-icon green">
+                <i class="bi bi-egg-fried"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Food Catalog</h6>
+                <h3>{{ kpis.total_items }}</h3>
+                <small>Active Menu Items</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card blue">
+            <div class="kpi-icon blue">
+                <i class="bi bi-box-seam-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Prepared</h6>
+                <h3>{{ kpis.total_prepared }}</h3>
+                <small>Total Portions</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card emerald">
+            <div class="kpi-icon emerald">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Consumed / Sold</h6>
+                <h3>{{ kpis.total_consumed }}</h3>
+                <small>Total Portions</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card danger">
+            <div class="kpi-icon danger">
+                <i class="bi bi-trash3-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Discarded</h6>
+                <h3>{{ kpis.total_wasted }}</h3>
+                <small>Wasted Portions</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card warning">
+            <div class="kpi-icon warning">
+                <i class="bi bi-percent"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Waste Rate</h6>
+                <h3>{{ kpis.waste_percentage }}%</h3>
+                <small>Loss Ratio</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card purple">
+            <div class="kpi-icon purple">
+                <i class="bi bi-cpu-fill"></i>
+            </div>
+            <div class="kpi-info">
+                <h6>Next-Day Demand</h6>
+                <h3>{{ kpis.next_day_demand }}</h3>
+                <small>AI Predicted Units</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Smart Alerts Section -->
+{% if alerts %}
+<div class="modern-card mb-4">
+    <div class="card-header-clean">
+        <h5><i class="bi bi-bell-fill text-warning"></i> Smart Waste & Demand Alerts</h5>
+        <span class="badge bg-light text-dark border">{{ alerts|length }} Active Notifications</span>
+    </div>
+    <div class="card-body-clean pb-2">
+        <div class="row g-2">
+            {% for alert in alerts %}
+            <div class="col-md-6 col-lg-4">
+                <div class="alert-card {{ alert.severity }} h-100 mb-2">
+                    <div class="alert-icon">
+                        {% if alert.severity == 'danger' %}
+                            <i class="bi bi-exclamation-octagon-fill text-danger"></i>
+                        {% elif alert.severity == 'warning' %}
+                            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                        {% elif alert.severity == 'success' %}
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill text-info"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="fw-bold mb-1 small">{{ alert.title }}</div>
+                        <div class="small opacity-75">{{ alert.message }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Row 1 Charts: Daily Consumption & Food Wastage -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-graph-up text-success"></i> Daily Food Consumption vs Preparation</h5>
+                <span class="text-muted small">Past 14 Days</span>
+            </div>
+            <div class="card-body-clean" style="height: 320px;">
+                <canvas id="dailyConsumptionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-pie-chart-fill text-success"></i> Category Distribution</h5>
+                <span class="text-muted small">Portion Share</span>
+            </div>
+            <div class="card-body-clean" style="height: 320px;">
+                <canvas id="categoryDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2 Charts: Food Wastage Bar & Weekly Demand Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-bar-chart-steps text-danger"></i> Daily Food Discarded (Waste Volume)</h5>
+                <span class="text-muted small">Daily Units Discarded</span>
+            </div>
+            <div class="card-body-clean" style="height: 290px;">
+                <canvas id="foodWastageBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="modern-card h-100">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-calendar-week text-primary"></i> Weekly Demand Patterns</h5>
+                <span class="text-muted small">Avg Consumption by Day of Week</span>
+            </div>
+            <div class="card-body-clean" style="height: 290px;">
+                <canvas id="weeklyDemandChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Log -->
+<div class="modern-card">
+    <div class="card-header-clean">
+        <h5><i class="bi bi-clock-history text-success"></i> Recent Food Records</h5>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('add_record') }}" class="btn btn-wasteless btn-sm">
+                <i class="bi bi-plus-circle"></i> Add Record
+            </a>
+            <a href="{{ url_for('daily_records') }}" class="btn btn-outline-wasteless btn-sm">
+                View All
+            </a>
+        </div>
+    </div>
+    <div class="card-body-clean p-0">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Food Item</th>
+                        <th>Category</th>
+                        <th>Prepared</th>
+                        <th>Consumed</th>
+                        <th>Leftover</th>
+                        <th>Discarded</th>
+                        <th>Waste %</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_records %}
+                    <tr>
+                        <td><strong>{{ record.date }}</strong></td>
+                        <td>{{ record.food_name }}</td>
+                        <td>
+                            <span class="badge-cat badge-cat-{{ record.category.lower() }}">
+                                {{ record.category }}
+                            </span>
+                        </td>
+                        <td>{{ record.prepared_quantity }} {{ record.unit }}</td>
+                        <td>{{ record.consumed_quantity }} {{ record.unit }}</td>
+                        <td>{{ record.remaining_quantity }} {{ record.unit }}</td>
+                        <td>
+                            <span class="text-danger fw-semibold">{{ record.actual_discarded_quantity }}</span>
+                        </td>
+                        <td>
+                            {% if record.waste_percentage > 12 %}
+                                <span class="badge badge-waste-high">{{ record.waste_percentage }}%</span>
+                            {% elif record.waste_percentage > 6 %}
+                                <span class="badge badge-waste-mid">{{ record.waste_percentage }}%</span>
+                            {% else %}
+                                <span class="badge badge-waste-low">{{ record.waste_percentage }}%</span>
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ record.notes or '—' }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                            No food records logged yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Daily Consumption Chart
+    WasteLessCharts.renderConsumptionChart(
+        'dailyConsumptionChart',
+        {{ analytics.timeline_dates | tojson }},
+        {{ analytics.timeline_prepared | tojson }},
+        {{ analytics.timeline_consumed | tojson }}
+    );
+
+    // 2. Category Distribution Chart
+    WasteLessCharts.renderCategoryPieChart(
+        'categoryDistributionChart',
+        {{ analytics.categories | tojson }},
+        {{ analytics.cat_cons | tojson }}
+    );
+
+    // 3. Food Wastage Bar Chart
+    WasteLessCharts.renderWastageBarChart(
+        'foodWastageBarChart',
+        {{ analytics.timeline_dates | tojson }},
+        {{ analytics.timeline_waste | tojson }}
+    );
+
+    // 4. Weekly Demand Pattern Chart
+    WasteLessCharts.renderWeeklyDemandChart(
+        'weeklyDemandChart',
+        {{ analytics.dow_labels | tojson }},
+        {{ analytics.dow_avg | tojson }}
+    );
+});
+</script>
+{% endblock %}
+

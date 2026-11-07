@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Profile – WasteLess{% endblock %}
+{% block page_title %}<i class="bi bi-person-circle text-success"></i> Administrator Profile{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="modern-card text-center">
+            <div class="card-body-clean py-4">
+                <div class="brand-icon mx-auto mb-3" style="width: 72px; height: 72px; font-size: 2rem;">
+                    {{ admin.full_name[0] | upper }}
+                </div>
+                <h5 class="fw-bold mb-1">{{ admin.full_name }}</h5>
+                <span class="badge bg-success-subtle text-success-emphasis mb-3">System Administrator</span>
+                <p class="text-muted small mb-3">@{{ admin.username }} • {{ admin.email }}</p>
+
+                <div class="border-top pt-3 text-start small text-muted">
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Account ID:</span>
+                        <strong class="text-dark">#{{ admin.id }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Member Since:</span>
+                        <strong class="text-dark">{{ admin.created_at.strftime('%b %d, %Y') if admin.created_at else 'Initial' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span>Last Login:</span>
+                        <strong class="text-dark">{{ admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Active Now' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Architecture Info -->
+        <div class="modern-card mt-3">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-info-circle text-success"></i> System Specifications</h5>
+            </div>
+            <div class="card-body-clean small text-muted">
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>Framework:</span>
+                    <strong class="text-dark">Flask 3.1 & SQLAlchemy</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>Database:</span>
+                    <strong class="text-dark">SQLite (wasteless.db)</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>ML Pipeline:</span>
+                    <strong class="text-dark">Scikit-learn Random Forest</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span>Reporting:</span>
+                    <strong class="text-dark">ReportLab 5.1 & CSV</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile / Password Form -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="modern-card">
+            <div class="card-header-clean">
+                <h5><i class="bi bi-pencil-square text-success"></i> Update Account Details</h5>
+            </div>
+            <div class="card-body-clean">
+                <form action="{{ url_for('update_profile') }}" method="POST">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label small fw-semibold">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" value="{{ admin.full_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label small fw-semibold">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ admin.email }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="username" class="form-label small fw-semibold">Username (Read-Only)</label>
+                        <input type="text" class="form-control bg-light" id="username" value="{{ admin.username }}" readonly>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-key-fill text-warning me-1"></i> Change Password (Optional)</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="new_password" class="form-label small fw-semibold">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Leave blank to keep unchanged">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label small fw-semibold">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm new password">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-wasteless px-4">
+                            <i class="bi bi-check-lg"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

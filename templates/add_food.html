@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{% if food %}Edit Food Item – WasteLess{% else %}Add Food Item – WasteLess{% endif %}{% endblock %}
+{% block page_title %}
+    <i class="bi bi-egg-fried text-success"></i> {% if food %}Edit Food Item{% else %}Add New Food Item{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="modern-card">
+            <div class="card-header-clean">
+                <h5>
+                    <i class="bi {% if food %}bi-pencil-square{% else %}bi-plus-circle-fill{% endif %} text-success"></i>
+                    {% if food %}Update Food Item Details{% else %}New Food Item Registration{% endif %}
+                </h5>
+                <a href="{{ url_for('food_management') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Catalog
+                </a>
+            </div>
+
+            <div class="card-body-clean">
+                <form action="{% if food %}{{ url_for('edit_food', food_id=food.id) }}{% else %}{{ url_for('add_food') }}{% endif %}" method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label small fw-semibold">Food Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ food.name if food else '' }}" placeholder="e.g. Steamed Basmati Rice" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" disabled {% if not food %}selected{% endif %}>Select Meal Category</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if food and food.category == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="unit" class="form-label small fw-semibold">Standard Unit <span class="text-danger">*</span></label>
+                            <select class="form-select" id="unit" name="unit" required>
+                                {% for u in ['servings', 'plates', 'portions', 'pieces', 'bowls', 'kg'] %}
+                                    <option value="{{ u }}" {% if food and food.unit == u %}selected{% endif %}>{{ u }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="price_per_serving" class="form-label small fw-semibold">Price per Serving (₹ INR) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">₹</span>
+                            <input type="number" step="0.5" min="0" class="form-control" id="price_per_serving" name="price_per_serving" value="{{ food.price_per_serving if food else '50.00' }}" required>
+                        </div>
+                        <div class="form-text small">Used to compute financial loss from discarded food.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label small fw-semibold">Description / Preparation Notes</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter ingredients, batch details, or perishability notes...">{{ food.description if food else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('food_management') }}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-wasteless px-4">
+                            <i class="bi bi-check-lg"></i> {% if food %}Save Changes{% else %}Register Food Item{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
